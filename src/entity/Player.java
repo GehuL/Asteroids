@@ -19,14 +19,6 @@ public class Player extends Entity
 
 	private static final float DECELERATION = 0.95f;
 
-	private long flammeTime;
-
-	private int flammeWidth;
-
-	private int flammeIndice;
-
-	private Image[] flammeImages = new Image[2];
-
 	private Earth earth;
 
 	private final Cannon cannon;
@@ -41,7 +33,7 @@ public class Player extends Entity
 
 		reactorL = new FlameThrower(7, 3.5f, (float) Math.PI);
 		reactorR = new FlameThrower(7, 3.5f, (float) Math.PI);
-		
+
 		cannon = new Cannon(game);
 
 		reset();
@@ -76,24 +68,8 @@ public class Player extends Entity
 
 	public void draw(Graphics2D g)
 	{
-
 		if (alive)
-		{
-
-			g.setColor(Color.RED);
 			game.drawImage(Textures.VAISSEAU.getImage(), x, y, width, height);
-
-			if (System.currentTimeMillis() - flammeTime > 250)
-			{
-				flammeIndice = flammeIndice == 1 ? 0 : 1;
-				flammeTime = System.currentTimeMillis();
-			}
-
-			flammeWidth++;
-			flammeWidth %= width / 2;
-			// game.drawImage(flammeImages[flammeIndice], x + width / 2 - flammeWidth / 2, y
-			// + height, flammeWidth, flammeWidth);
-		}
 
 		cannon.draw(g);
 

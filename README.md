@@ -2,6 +2,8 @@
 
 Jeu experimental de destruction d'asteroids.
 
+![picture](rsc/textures/screenshot.png)
+
 ## Langage
 
 Le jeu est programmé entièrement en Java et n'utilise aucune librairie autre que le jdk (version 17).
@@ -12,6 +14,9 @@ Pour le rendu graphique swing et awt sont utilisés.
 - Génération aléatoire d'asteroid
 - Séparation en plusieurs morceaux d'asteroid
 - Différents types de munition.
+- Sauvegarde du score
+- Pause state
+- Game over state
 
 ## Asteroid
 

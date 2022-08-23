@@ -4,8 +4,8 @@ import asteroids.Sound;
 
 public class BasicBulletItem extends BulletItem {
 
-	public static final int default_width = 14;
-	public static final int default_height = 30;
+	public static final int default_width = 7;
+	public static final int default_height = 7;
 	
 	public BasicBulletItem(Game game) {
 		super(game, 0, 0, 0, 0, null);

@@ -7,7 +7,7 @@ import asteroids.Game;
 
 public class FlameThrower
 {
-	private int ammount;
+	private int spawnTick;
 
 	private float speed;
 
@@ -16,9 +16,9 @@ public class FlameThrower
 	private int tick;
 
 	// Angle en radian
-	public FlameThrower(int ammount, float speed, float angle)
+	public FlameThrower(int spawnTick, float speed, float angle)
 	{
-		this.ammount = ammount;
+		this.spawnTick = spawnTick;
 		this.speed = speed;
 		this.angle = angle;
 	}
@@ -30,14 +30,14 @@ public class FlameThrower
 		{
 			Random rand = Game.getRandom();
 
-			tick += ammount;
+			tick += spawnTick;
 
 			float velX = (float) Math.cos(rand.nextFloat() * angle);
 			float velY = (rand.nextFloat(0.5f) + 0.5f) * speed;
 
-			float hue = rand.nextFloat(0.166f); // Produce a color from red to yellow (60° / 360 = 0.166).
+			float hue = rand.nextFloat(0.13f) + 0.48f;// Produce a color from red to yellow (60° / 360 = 0.166).
 			Color col = Color.getHSBColor(hue, 1f, 1f);
-			
+
 			PixelParticle pixel = new PixelParticle(game, col, x, y, velX, velY, 30);
 			game.spawnEntity(pixel);
 		}

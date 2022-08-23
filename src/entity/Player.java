@@ -1,8 +1,6 @@
 package entity;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Float;
@@ -13,9 +11,13 @@ import asteroids.Textures;
 
 public class Player extends Entity
 {
-	private static final int MAX_SPEED = 5;
+	// private static final int MAX_SPEED = 5;
 
-	private static final float ACCELERATION = 0.5f;
+	private float lastX;
+
+	private float lastY;
+
+	private static final float ACCELERATION = 0.35f;
 
 	private static final float DECELERATION = 0.95f;
 
@@ -31,16 +33,20 @@ public class Player extends Entity
 
 		this.earth = earth;
 
-		reactorL = new FlameThrower(7, 3.5f, (float) Math.PI);
-		reactorR = new FlameThrower(7, 3.5f, (float) Math.PI);
+		reactorL = new FlameThrower(6, 3.5f, (float) Math.PI);
+		reactorR = new FlameThrower(6, 3.5f, (float) Math.PI);
 
 		cannon = new Cannon(game);
 
 		reset();
+
 	}
 
 	public void update(float deltaTime)
 	{
+		lastX = x;
+		lastY = y;
+
 		super.update(deltaTime);
 
 		int horizontal = Boolean.compare(game.input.keyDown(KeyEvent.VK_D), game.input.keyDown(KeyEvent.VK_Q));
@@ -98,8 +104,27 @@ public class Player extends Entity
 			Sound.RELOAD.play();
 		} else if (entity instanceof Asteroidv2)
 		{
-			if (((Asteroidv2) entity).checkPixelCollision(this.getHitbox()))
-				this.alive = false;
+			Asteroidv2 asteroid = (Asteroidv2) entity;
+			Rectangle2D.Float collisionRect = asteroid.getPixelCollisionRect(hitbox);
+			if (collisionRect != null)
+			{
+				if (collisionRect.x < this.y || collisionRect.getCenterY() > this.y + width)
+					this.velY = -1;
+
+				final float bouncing = 1.f;
+
+				this.velX = asteroid.velX - velX * bouncing;
+				this.velY = asteroid.velY - velY * bouncing;
+				
+//				int playerMasse = 5;
+//				int asteroidMasse = 30;
+//				
+//				float masseFactor = (playerMasse - asteroidMasse) / (playerMasse + asteroidMasse);
+//				float masseFactor2 = 2 * asteroidMasse / (playerMasse - asteroidMasse);
+//				
+//				this.velX = masseFactor * velX + masseFactor2 * asteroid.velX;
+//				this.velY = masseFactor * velY + masseFactor2 * asteroid.velY;
+			}
 		}
 		return false;
 	}

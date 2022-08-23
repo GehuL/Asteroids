@@ -2,10 +2,8 @@ package entity;
 
 import java.awt.Graphics2D;
 
-import javax.sound.sampled.Clip;
-
-import asteroids.Sound;
 import asteroids.Game;
+import asteroids.Sound;
 import asteroids.Sprite;
 import asteroids.Textures;
 

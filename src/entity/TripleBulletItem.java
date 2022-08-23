@@ -11,7 +11,7 @@ public class TripleBulletItem extends BulletItem {
 
 	@Override
 	public void shoot(Game game, float x, float y) {
-		game.spawnEntity(new TripleBullet(game, x, y));
+		game.spawnEntity(new TripleBullet(game, x - 3, y));
 		Sound.GUNSHOT.play();
 	}
 

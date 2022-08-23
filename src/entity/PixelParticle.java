@@ -12,17 +12,17 @@ public class PixelParticle extends Entity
 	private Color color;
 
 	private int tick;
-	
+
 	public static final int PIXEL_SIZE = 5;
 
 	public PixelParticle(Game game, Color color, float x, float y, float velX, float velY, int tick)
 	{
 		super(game, x, y, PIXEL_SIZE, PIXEL_SIZE);
+		this.collisionEnable = false;
 
 		this.velX = velX;
 		this.velY = velY;
 
-		this.collisionEnable = false;
 		this.color = color;
 
 		this.tick = tick;
@@ -34,8 +34,12 @@ public class PixelParticle extends Entity
 	{
 		super.update(deltaTime);
 
-		color = new Color(color.getRed(), color.getBlue(), color.getGreen(), (int) (tick * alphaCoef));
-
+		int alpha = (int) (tick * alphaCoef) << 24;
+		int col = color.getRGB() & 0x00ffffff;
+		col |= alpha;
+		
+		color = new Color(col, true);
+		
 		if (tick <= 0)
 			this.alive = false;
 

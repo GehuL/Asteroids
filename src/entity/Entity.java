@@ -43,8 +43,11 @@ public abstract class Entity
 
 	public void update(float deltaTime)
 	{
-		x += velX * GAME_SPEED * deltaTime;
-		y += velY * GAME_SPEED * deltaTime;
+		float offsetX = velX * GAME_SPEED * deltaTime;
+		float offsetY = velY * GAME_SPEED * deltaTime;
+
+		x += offsetX;
+		y += offsetY;
 
 		// Every entities are teleported from left to right and vice-versa
 		if (x < -width)
@@ -62,16 +65,16 @@ public abstract class Entity
 			ArrayList<Entity> entities = game.getEntities();
 			for (int i = 0; i < entities.size(); i++)
 			{
-				if (entities.get(i) != this && this.hitbox.intersects(entities.get(i).hitbox))
+				Rectangle2D.Float rect = entities.get(i).hitbox;
+
+				if (entities.get(i) != this && this.hitbox.intersects(rect) && entities.get(i).isCollisionEnable())
 				{
-//					if (!onCollision(entities.get(i)))
-//						break;
 					onCollision(entities.get(i));
 				}
-
 			}
 
 		}
+
 	};
 
 	public void draw(Graphics2D g)

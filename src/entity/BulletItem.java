@@ -5,8 +5,8 @@ import asteroids.Game;
 
 public abstract class BulletItem extends Item {
 
-	protected int ammount = 100;
-	protected int fireDelay = 350;
+	protected int ammount = 10000;
+	protected int fireDelay = 70;
 
 	public BulletItem(Game game, float x, float y, int width, int height, Image image) {
 		super(game, x, y, width, height, image);

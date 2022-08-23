@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import javax.imageio.ImageIO;
 import javax.sound.sampled.Clip;
 import javax.swing.JFrame;
 
@@ -39,7 +40,7 @@ public class Game extends JFrame implements ComponentListener
 
 	private static final String FONT_EXTENSION = ".ttf";
 
-	static final String[] pauseText = { "GAME PAUSED", "[PRESS KEY P]" };
+	static final String[] pauseText = { "GAME PAUSED", "[PRESS KEY P]", };
 
 	static final String[] gameoverText = { "GAME OVER", "[PRESS ENTER]" };
 
@@ -47,7 +48,7 @@ public class Game extends JFrame implements ComponentListener
 
 	public static final int FPS_120 = 120;
 
-	public static final boolean DEBUG = !true;
+	public static final boolean DEBUG = true;
 
 	private boolean run;
 
@@ -83,10 +84,14 @@ public class Game extends JFrame implements ComponentListener
 
 	private Clip gameMusic;
 
+	private static final short seed;
+
 	static
 	{
-		int seed = new Random().nextInt(Short.MIN_VALUE, Short.MAX_VALUE); // Using short to get a shorter hex string
-																			// and more friendly user
+		// Generate seed to be print for the user
+		seed = (short) (new Random().nextInt(Short.MIN_VALUE, Short.MAX_VALUE) & 0xffff); // Using short to get a shorter
+																							// hex string
+		// seed = Integer.parseInt("40c9", 16);
 		random = new Random(seed);
 		System.out.println("Game seed:" + Integer.toHexString(seed & 0xffff));
 	}
@@ -101,7 +106,6 @@ public class Game extends JFrame implements ComponentListener
 
 		setTitle("Asteroids");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//		setResizable(false);
 
 		canvas = new GameCanvas(new Dimension(width, height));
 		canvas.addComponentListener(this);
@@ -115,7 +119,14 @@ public class Game extends JFrame implements ComponentListener
 
 		requestFocusInWindow();
 
-		setIconImage(Textures.ASTEROID.getImage());
+		try
+		{
+			setIconImage(ImageIO.read(new File("rsc/images/asteroid.png")));
+		} catch (IOException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		earth = new Earth(this);
 		player = new Player(this, earth, 50, 170, 50, 50);
@@ -127,8 +138,7 @@ public class Game extends JFrame implements ComponentListener
 
 		try
 		{
-			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(
-					Font.createFont(Font.TRUETYPE_FONT, new File(FONT_PATH + FONT_NAME + FONT_EXTENSION)));
+			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(FONT_PATH + FONT_NAME + FONT_EXTENSION)));
 			bufferGraphic.setFont(new Font(FONT_NAME, Font.PLAIN, 18));
 		} catch (FontFormatException e)
 		{
@@ -153,7 +163,8 @@ public class Game extends JFrame implements ComponentListener
 	{
 		canvasGraphic = (Graphics2D) canvas.getGraphics();
 		canvasGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		canvasGraphic.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+		canvasGraphic.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		canvasGraphic.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 	}
 
 	public static Random getRandom()
@@ -253,8 +264,8 @@ public class Game extends JFrame implements ComponentListener
 
 	private void loadRessources()
 	{
-		// Cr�er chaque objet de l'enumeration et charge les images
-		// Si la methode est appel� plusieurs fois les images ne sont pas recharg�s
+		System.out.println("Loading ressouces...");
+		// The JVM will call every constructor once from the enum
 		Sound.values();
 		Textures.values();
 	}
@@ -292,7 +303,18 @@ public class Game extends JFrame implements ComponentListener
 	{
 		for (Entity en : entities)
 		{
-			if (entity.hitbox.intersects(en.hitbox))
+			if (en != entity && entity.hitbox.intersects(en.hitbox))
+				return true;
+		}
+		return false;
+	}
+
+	// intersection avec au moins une autre entité
+	public boolean isIntersecting(Entity entity, Rectangle2D.Float rect)
+	{
+		for (Entity en : entities)
+		{
+			if (en != entity && en.isCollisionEnable() && en.hitbox.intersects(rect))
 				return true;
 		}
 		return false;
@@ -371,7 +393,7 @@ public class Game extends JFrame implements ComponentListener
 			}
 		}
 
-		if (isGameOver())
+		//if (isGameOver())
 			if (input.keyDown(KeyEvent.VK_ENTER))
 			{
 				restart();
@@ -442,6 +464,7 @@ public class Game extends JFrame implements ComponentListener
 		}
 
 		bufferGraphic.setColor(Color.RED);
+		bufferGraphic.drawString("Seed:" + Integer.toHexString(seed & 0xffff), 0, 20);
 		bufferGraphic.drawString("Score:" + score, 0, 50);
 		bufferGraphic.drawString("Entity:" + entities.size(), 0, 70);
 

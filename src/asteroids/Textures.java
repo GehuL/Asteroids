@@ -5,7 +5,6 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
@@ -14,8 +13,6 @@ public enum Textures
 {
 	VAISSEAU("vaisseau.png"),
 	ASTEROID("asteroid.png"),
-	FLAMME1("flamme1.png"),
-	FLAMME2("flamme2.png"),
 	BACKGROUND(background()),
 	EXPLOSION("explosion.png"),
 	EARTH("earth.png"),
@@ -29,9 +26,6 @@ public enum Textures
 
 	private BufferedImage image;
 
-	// Le constructeur est appel� lors du premier appel de l'enum;
-	// Textures.VAISSEAU.getImage() -> construit l'objet
-	// Textures.VAISSEAU.getImage() -> Objet d�j� construit
 	private Textures(String file)
 	{
 		try

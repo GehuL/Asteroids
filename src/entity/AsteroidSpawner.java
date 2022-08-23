@@ -16,16 +16,18 @@ public class AsteroidSpawner extends Entity
 	{
 		super(game, 0, 0, 0, 0);
 		collisionEnable = false;
+
 	}
 
 	public void update(float deltaTime)
 	{
-		// Pas de supercall car pas besoin de hitbox 
+		// Pas de supercall car pas besoin de hitbox
 		if (System.currentTimeMillis() - asteroidTime > Game.getRandom().nextInt(MAX_TIME - MIN_TIME) + MIN_TIME)
 		{
 			if (createAsteroid())
 				asteroidTime = System.currentTimeMillis();
 		}
+
 	}
 
 	@Override

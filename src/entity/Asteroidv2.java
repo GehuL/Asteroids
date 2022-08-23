@@ -339,6 +339,7 @@ public class Asteroidv2 extends Entity
 			if (isDead())
 			{
 				this.alive = false;
+				Game.score++;
 			} else
 			{
 				ArrayList<Pixel[][]> subList = findSubAsteroid(pixels);
@@ -357,9 +358,9 @@ public class Asteroidv2 extends Entity
 						
 						float direction = 0;
 						if(rect.getX() > bullet.hitbox.getCenterX())
-							direction = 1;
+							direction = 0.5f;
 						else
-							direction = -1;
+							direction = -0.5f;
 						
 						a.velX = (float) (Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) * direction);
 

@@ -2,7 +2,7 @@
 
 Jeu experimental de destruction d'asteroids.
 
-![picture](rsc/textures/screenshot.png)
+![picture](rsc/github/screenshot.png)
 
 ## Langage
 

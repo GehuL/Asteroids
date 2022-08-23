@@ -3,12 +3,14 @@ package entity;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.Rectangle2D.Float;
 import java.util.ArrayList;
 import java.util.Random;
 
 import asteroids.Game;
 import asteroids.GameUtils;
 import asteroids.NoiseGenerator;
+import util.FloodFill;
 
 public class Asteroidv2 extends Entity
 {
@@ -24,18 +26,18 @@ public class Asteroidv2 extends Entity
 	{
 		super(game, x, y, 0, 0);
 
-		long asteroidSeed = Game.getRandom().nextLong();
-		Random random = new Random(asteroidSeed);
+		long seed = Game.getRandom().nextLong();
+		Random random = new Random(seed);
 
 		noiseGen.setSeed(random.nextDouble()); // New seed for this asteroid. generate() and colorize use it.
 
-		System.out.println("Asteroid's seed:" + asteroidSeed);
-
-		pixels = generate(5, random.nextInt(16 - 6) + 6, 25.);
-		colorize(pixels);
+		pixels = generate(5, random.nextInt(10) + 6, 25.);
 
 		width = pixels[0].length * PIXEL_SIZE;
 		height = pixels.length * PIXEL_SIZE;
+
+		String info = String.format("Asteroid généré (pixels: %d, seed: %s).", pixels.length * pixels[0].length, seed);
+		System.out.println(info);
 	}
 
 	private Asteroidv2(Game game, float x, float y, Pixel[][] pixels)
@@ -46,18 +48,15 @@ public class Asteroidv2 extends Entity
 
 		width = pixels[0].length * PIXEL_SIZE;
 		height = pixels.length * PIXEL_SIZE;
+
+		System.out.println("Asteroid crée par transfert (" + pixels.length * pixels[0].length + " pixels).");
 	}
 
 	public Pixel[][] generate(int radiusMin, int radiusMax, double noise)
 	{
-
-		// Paramètres
 		int resolution = 100;
 
 		Pixel[][] pixelsTmp = new Pixel[2 * (int) radiusMax][2 * (int) radiusMax];
-
-		int minX = Integer.MAX_VALUE, maxX = 0;
-		int minY = Integer.MAX_VALUE, maxY = 0;
 
 		for (float angle = 0; angle <= Math.PI * 2; angle += Math.PI * 2 / resolution)
 		{
@@ -65,27 +64,25 @@ public class Asteroidv2 extends Entity
 			double nY = GameUtils.map(Math.sin(angle), -1., 1., 0., noise);
 
 			double n = noiseGen.noise(nX, nY);
-			double nVar = GameUtils.map(n, -1., 1., (double) radiusMin, (double) radiusMax);
+			double nVar = GameUtils.map(n, -1., 1., (double) radiusMin, (double) radiusMax - 1);
 
 			int x = (int) (Math.cos(angle) * nVar + radiusMax);
 			int y = (int) (Math.sin(angle) * nVar + radiusMax);
 
-			Pixel px = new Pixel();
-			pixelsTmp[y][x] = px;
-
-			maxX = Math.max(x, maxX);
-			maxY = Math.max(y, maxY);
-
-			minX = Math.min(x, minX);
-			minY = Math.min(y, minY);
+			pixelsTmp[y][x] = Pixel.DEFAULT_PIXEL;
 		}
 
 		// Fit table dimension to the shape dimension
-		Pixel[][] pixelsDest = new Pixel[maxY - minY + 1][maxX - minX + 1];
-		for (int i = 0; i < pixelsDest.length; i++)
-			System.arraycopy(pixelsTmp[minY + i], minX, pixelsDest[i], 0, pixelsDest[0].length);
+		Pixel[][] pixelsDest = shrinkAsteroid(pixelsTmp, null);
 
+		// Tryed to do colorizing in floodfill, but there is sometime pixel miss...
 		floodFill(pixelsDest[0].length / 2, pixelsDest.length / 2, pixelsDest);
+
+		// Coloring every pixel
+		for (int line = 0; line < pixelsDest.length; line++)
+			for (int col = 0; col < pixelsDest[line].length; col++)
+				if (pixelsDest[line][col] != null)
+					colorize(col, line, pixelsDest);
 
 		return pixelsDest;
 	}
@@ -93,11 +90,11 @@ public class Asteroidv2 extends Entity
 	public static void floodFill(int x, int y, Pixel[][] sourcePx)
 	{
 		// Border detection
-		if (y >= sourcePx.length || y < 0 || x >= sourcePx[0].length || x < 0 || sourcePx[y][x] != null)
+		boolean OutOfBound = y >= sourcePx.length || y < 0 || x >= sourcePx[0].length || x < 0;
+		if (OutOfBound || sourcePx[y][x] != null)
 			return;
 
-		sourcePx[y][x] = new Asteroidv2.Pixel();
-		sourcePx[y][x].setDropItem(Game.getRandom().nextInt(500) == 1);
+		sourcePx[y][x] = Pixel.DEFAULT_PIXEL; // No pixel allocation, just mark it for coloring.
 
 		floodFill(x + 1, y, sourcePx);
 		floodFill(x - 1, y, sourcePx);
@@ -106,33 +103,28 @@ public class Asteroidv2 extends Entity
 	}
 
 	// Apply a perlin noise shading on every pixels.
-	private static void colorize(Pixel[][] pixels)
+	private static void colorize(int x, int y, Pixel[][] dest)
 	{
-		final double coef = 1.5d;
-
-		for (int y = 0; y < pixels.length; y++)
+		Color col;
+		boolean dropItem = Game.getRandom().nextInt(500) == 1;
+		if (!dropItem)
 		{
-			for (int x = 0; x < pixels[y].length; x++)
-			{
-				if (pixels[y][x] != null)
-				{
-					if (pixels[y][x].isDropItem())
-					{
-						pixels[y][x].setColor(Color.YELLOW);
-						continue;
-					}
+			final double coef = 1.5d;
 
-					double nn = noiseGen.noise((double) x * coef, (double) y * coef);
-					double n = GameUtils.map(nn, -1., 1., 0., 1.);
+			double nn = noiseGen.noise((double) x * coef, (double) y * coef);
+			double n = GameUtils.map(nn, -1., 1., 0., 1.);
 
-					int r = (int) (n * Pixel.DEFAULT_COLOR.getRed());
-					int g = (int) (n * Pixel.DEFAULT_COLOR.getGreen());
-					int b = (int) (n * Pixel.DEFAULT_COLOR.getBlue());
+			int r = (int) (n * Pixel.DEFAULT_COLOR.getRed());
+			int g = (int) (n * Pixel.DEFAULT_COLOR.getGreen());
+			int b = (int) (n * Pixel.DEFAULT_COLOR.getBlue());
 
-					pixels[y][x].setColor(new Color(r, g, b));
-				}
-			}
+			col = new Color(r, g, b);
+		} else
+		{
+			col = Color.yellow;
 		}
+
+		dest[y][x] = new Asteroidv2.Pixel(col, Pixel.DEFAULT_LIFE, dropItem);
 	}
 
 	// Count how many "agglomeration" of pixel are in the pixel array.
@@ -142,6 +134,7 @@ public class Asteroidv2 extends Entity
 	private static ArrayList<Pixel[][]> findSubAsteroid(Pixel[][] sourcePx)
 	{
 		ArrayList<Pixel[][]> subAsteroid = new ArrayList<>();
+
 		Pixel[][] buffer = new Pixel[sourcePx.length][sourcePx[0].length];
 		for (int i = 0; i < buffer.length; i++)
 			System.arraycopy(sourcePx[i], 0, buffer[i], 0, buffer[0].length);
@@ -164,6 +157,42 @@ public class Asteroidv2 extends Entity
 		return subAsteroid;
 	}
 
+	// Reduce the array to fit the asteroid.
+	// Translate x, y from rect to keep the good position in screen.
+	private static Pixel[][] shrinkAsteroid(Pixel[][] sourcePx, Rectangle2D.Float rect)
+	{
+		int minX = Integer.MAX_VALUE, maxX = 0;
+		int minY = Integer.MAX_VALUE, maxY = 0;
+
+		for (int line = 0; line < sourcePx.length; line++)
+		{
+			for (int col = 0; col < sourcePx[line].length; col++)
+			{
+				if (sourcePx[line][col] != null && !sourcePx[line][col].isDead())
+				{
+					maxX = Math.max(col, maxX);
+					maxY = Math.max(line, maxY);
+
+					minX = Math.min(col, minX);
+					minY = Math.min(line, minY);
+				}
+			}
+		}
+
+		if (rect != null)
+		{
+			rect.x += minX * PIXEL_SIZE;
+			rect.y += minY * PIXEL_SIZE;
+		}
+
+		// Fit table dimension to the shape dimension
+		Pixel[][] destPx = new Pixel[maxY - minY + 1][maxX - minX + 1];
+		for (int i = 0; i < destPx.length; i++)
+			System.arraycopy(sourcePx[minY + i], minX, destPx[i], 0, destPx[0].length);
+
+		return destPx;
+	}
+
 	public static boolean containPixel(Pixel[][] pixels, Pixel pixel)
 	{
 		for (int y = 0; y < pixels.length; y++)
@@ -173,19 +202,15 @@ public class Asteroidv2 extends Entity
 		return false;
 	}
 
-	// SourcePx is modified for performance issues.
-	// For each pixel found it is stored in pixelFound and removed in sourcePx for
-	// performance optimization.
+	// Each pixel found at x y is marked as null in sourcePx.
 	private static void findSubAsteroidBis(int x, int y, Pixel[][] sourcePx, Pixel[][] pixelFound)
 	{
 		// Pixel detection, stop if array bounds are found or empty pixel or pixel
 		if (y >= sourcePx.length || y < 0 || x >= sourcePx[0].length || x < 0 || sourcePx[y][x] == null || sourcePx[y][x].isDead())
 			return;
 
-		Pixel pixel = sourcePx[y][x];
+		pixelFound[y][x] = sourcePx[y][x];
 		sourcePx[y][x] = null; // Mark it as found
-
-		pixelFound[y][x] = pixel;
 
 		// HORIZONTAL / VERTICAL
 		findSubAsteroidBis(x - 1, y, sourcePx, pixelFound);
@@ -200,6 +225,33 @@ public class Asteroidv2 extends Entity
 		findSubAsteroidBis(x + 1, y + 1, sourcePx, pixelFound);
 	}
 
+	// Return the position of the collision with the pixel
+	public Rectangle2D.Float getPixelCollisionRect(Rectangle2D.Float rect)
+	{
+		Rectangle2D.Float point = null;
+		for (int y = 0; y < pixels.length; y++)
+		{
+			for (int x = 0; x < pixels[y].length; x++)
+			{
+				Pixel pixel = pixels[y][x];
+				if (pixel != null && !pixel.isDead())
+				{
+					Rectangle2D.Float pxRect = new Rectangle2D.Float();
+
+					pxRect.x = (int) this.x + PIXEL_SIZE * x;
+					pxRect.y = (int) this.y + PIXEL_SIZE * y;
+					pxRect.width = PIXEL_SIZE;
+					pxRect.height = PIXEL_SIZE;
+
+					if (pxRect.intersects(rect))
+						return (Float) pxRect.createIntersection(rect);
+				}
+			}
+		}
+		return point;
+	}
+
+	// Return the position of the collision with the pixel
 	public boolean checkPixelCollision(Rectangle2D.Float rect)
 	{
 		boolean collide = false;
@@ -218,9 +270,7 @@ public class Asteroidv2 extends Entity
 					pxRect.height = PIXEL_SIZE;
 
 					if (pxRect.intersects(rect))
-					{
 						collide = true;
-					}
 				}
 			}
 		}
@@ -281,10 +331,9 @@ public class Asteroidv2 extends Entity
 						if (pixel.isDead())
 						{
 
-							PixelParticle particle = new PixelParticle(game, pixel.getInitColor(), (int) pxRect.getCenterX(), (int) pxRect.getCenterY(), -bullet.getVelX(), getVelY() - bullet.getVelY() * 0.7f, 60);
+							PixelParticle particle = new PixelParticle(game, pixel.getInitColor(), (int) pxRect.getCenterX(), (int) pxRect.getCenterY(), -bullet.getVelX(), getVelY() - bullet.getVelY() * 0.7f, 30);
 
 							particle.velX = (float) Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) * bullet.velX;
-
 							particle.velX += Math.cos(Game.getRandom().nextFloat() * Math.PI);
 
 							game.spawnEntity(particle);
@@ -292,7 +341,7 @@ public class Asteroidv2 extends Entity
 							if (pixel.isDropItem())
 								ItemUtils.dropRandomItem(game, this.x + x1 * PIXEL_SIZE - PIXEL_SIZE / 2, this.y + y1 * PIXEL_SIZE - PIXEL_SIZE / 2);
 
-							pixels[y1][x1] = null;
+							// pixels[y1][x1] = null;
 
 							isPixelDead = true;
 						}
@@ -309,10 +358,14 @@ public class Asteroidv2 extends Entity
 				// Splitting
 				for (Pixel[][] sub : subList)
 				{
-					Asteroidv2 a = new Asteroidv2(game, x, y, sub);
-					a.velX = (float) Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) * bullet.velX;
+					Rectangle2D.Float rect = (Float) hitbox.clone();
+					sub = shrinkAsteroid(sub, rect);
 
+					Asteroidv2 a = new Asteroidv2(game, rect.x, rect.y, sub);
+
+					a.velX = (float) Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) * bullet.velX;
 					a.velX += Math.cos(Game.getRandom().nextFloat() * Math.PI);
+
 					a.velY = this.velY;
 
 					game.spawnEntity(a);
@@ -322,6 +375,8 @@ public class Asteroidv2 extends Entity
 		}
 
 	}
+
+	int regenTick;
 
 	@Override
 	public void update(float deltaTime)
@@ -333,7 +388,35 @@ public class Asteroidv2 extends Entity
 			alive = false;
 			return;
 		}
+
+		//regenerate();
 	}
+	
+	public void regenerate()
+	{
+		// REGENERATION TEST
+		if (regenTick-- <= 0)
+		{
+			regenTick += 10;
+			ArrayList<Pixel> pixelDamaged = new ArrayList<Pixel>();
+			for (int y = 0; y < pixels.length; y++)
+				for (int x = 0; x < pixels[y].length; x++)
+				{
+					Pixel pixel = pixels[y][x];
+					if (pixel != null && pixel.getInitLife() > pixel.getLife())
+					{
+						pixelDamaged.add(pixel);
+					}
+				}
+
+			if (!pixelDamaged.isEmpty())
+			{
+				int id = Game.getRandom().nextInt(pixelDamaged.size());
+				pixelDamaged.get(id).addLife();
+			}
+		}
+	}
+	
 
 	@Override
 	public void draw(Graphics2D g)
@@ -358,11 +441,18 @@ public class Asteroidv2 extends Entity
 		return false;
 	}
 
+	// Immutable
 	private static class Pixel
 	{
+		public static final Pixel DEFAULT_PIXEL = new Pixel(Pixel.TYPE_PIXEL);
+		
 		private boolean dropItem; // Drop item if destroyed
 
-		private static final int DEFAULT_LIFE = 3;
+		public static final int DEFAULT_LIFE = 3;
+
+		public static final int TYPE_EDGE = 0;
+
+		public static final int TYPE_PIXEL = 1;
 
 		private static final Color DEFAULT_COLOR = new Color(176, 170, 157);
 
@@ -370,8 +460,11 @@ public class Asteroidv2 extends Entity
 
 		private int life, initLife;
 
-		public Pixel()
+		private int type;
+
+		public Pixel(int type)
 		{
+			this.type = type;
 			this.initColor = DEFAULT_COLOR;
 			this.color = DEFAULT_COLOR;
 			this.life = DEFAULT_LIFE;
@@ -380,21 +473,12 @@ public class Asteroidv2 extends Entity
 
 		public Pixel(Color col, int life, boolean dropItem)
 		{
+			this.type = TYPE_PIXEL;
 			this.initColor = col;
 			this.color = col;
 			this.life = life;
 			this.initLife = life;
 			this.dropItem = dropItem;
-		}
-
-		public void setDropItem(boolean b)
-		{
-			this.dropItem = b;
-		}
-
-		public void setColor(Color col)
-		{
-			this.initColor = this.color = col;
 		}
 
 		public boolean isDropItem()
@@ -418,9 +502,31 @@ public class Asteroidv2 extends Entity
 			this.color = new Color(life * initColor.getRed() / initLife, life * initColor.getGreen() / initLife, life * initColor.getBlue() / initLife);
 		}
 
+		public void addLife()
+		{
+			this.life = Math.min(++life, initLife);
+			this.color = new Color(life * initColor.getRed() / initLife, life * initColor.getGreen() / initLife, life * initColor.getBlue() / initLife);
+		}
+
+		public int getLife()
+		{
+			return life;
+		}
+
+		public int getInitLife()
+		{
+			return initLife;
+		}
+
 		public Color getInitColor()
 		{
 			return initColor;
 		}
+
+		public int getType()
+		{
+			return type;
+		}
 	}
+
 }

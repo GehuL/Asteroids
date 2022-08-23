@@ -52,6 +52,17 @@ public class Asteroidv2 extends Entity
 		System.out.println("Asteroid crée par transfert (" + pixels.length * pixels[0].length + " pixels).");
 	}
 
+	// There is no longer pixel alive
+	public boolean isDead()
+	{
+		boolean dead = true;
+		for (int line = 0; line < pixels.length; line++)
+			for (int col = 0; col < pixels[line].length; col++)
+				if (pixels[line][col] != null && !pixels[line][col].isDead())
+					dead = false;
+		return dead;
+	}
+
 	public Pixel[][] generate(int radiusMin, int radiusMax, double noise)
 	{
 		int resolution = 100;
@@ -277,34 +288,6 @@ public class Asteroidv2 extends Entity
 		return collide;
 	}
 
-	public void dealDamage(Rectangle2D.Float rect)
-	{
-		for (int y = 0; y < pixels.length; y++)
-		{
-			for (int x = 0; x < pixels[y].length; x++)
-			{
-				Pixel pixel = pixels[y][x];
-				if (pixel != null && !pixel.isDead())
-				{
-					Rectangle2D.Float pxRect = new Rectangle2D.Float();
-
-					pxRect.x = (int) this.x + PIXEL_SIZE * x;
-					pxRect.y = (int) this.y + PIXEL_SIZE * y;
-					pxRect.width = PIXEL_SIZE;
-					pxRect.height = PIXEL_SIZE;
-
-					if (pxRect.intersects(rect))
-					{
-						pixel.removeLife();
-
-						if (pixel.isDead())
-							ItemUtils.dropRandomItem(game, this.x + x * PIXEL_SIZE - PIXEL_SIZE / 2, this.y + y * PIXEL_SIZE - PIXEL_SIZE / 2);
-					}
-				}
-			}
-		}
-	}
-
 	public void dealDamage(AbstractBullet bullet, float f, float g, float radius)
 	{
 		boolean isPixelDead = false; // If at least one pixel is dead to perform splitting
@@ -341,6 +324,7 @@ public class Asteroidv2 extends Entity
 							if (pixel.isDropItem())
 								ItemUtils.dropRandomItem(game, this.x + x1 * PIXEL_SIZE - PIXEL_SIZE / 2, this.y + y1 * PIXEL_SIZE - PIXEL_SIZE / 2);
 
+							// Keep reference for the regeneate method
 							// pixels[y1][x1] = null;
 
 							isPixelDead = true;
@@ -350,27 +334,41 @@ public class Asteroidv2 extends Entity
 			}
 		}
 
-		if (isPixelDead)
+		if (isPixelDead) // At least one pixel is dead
 		{
-			ArrayList<Pixel[][]> subList = findSubAsteroid(pixels);
-			if (subList.size() > 1)
+			if (isDead())
 			{
-				// Splitting
-				for (Pixel[][] sub : subList)
-				{
-					Rectangle2D.Float rect = (Float) hitbox.clone();
-					sub = shrinkAsteroid(sub, rect);
-
-					Asteroidv2 a = new Asteroidv2(game, rect.x, rect.y, sub);
-
-					a.velX = (float) Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) * bullet.velX;
-					a.velX += Math.cos(Game.getRandom().nextFloat() * Math.PI);
-
-					a.velY = this.velY;
-
-					game.spawnEntity(a);
-				}
 				this.alive = false;
+			} else
+			{
+				ArrayList<Pixel[][]> subList = findSubAsteroid(pixels);
+				if (subList.size() > 1)
+				{
+					// Splitting
+					for (Pixel[][] sub : subList)
+					{
+						Rectangle2D.Float rect = (Float) hitbox.clone();
+						sub = shrinkAsteroid(sub, rect);
+
+						Asteroidv2 a = new Asteroidv2(game, rect.x, rect.y, sub);
+
+						// a.velX = (float) Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) *
+						// bullet.velX;
+						
+						float direction = 0;
+						if(rect.getX() > bullet.hitbox.getCenterX())
+							direction = 1;
+						else
+							direction = -1;
+						
+						a.velX = (float) (Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) * direction);
+
+						a.velY = this.velY;
+
+						game.spawnEntity(a);
+					}
+					this.alive = false;
+				}
 			}
 		}
 
@@ -389,9 +387,9 @@ public class Asteroidv2 extends Entity
 			return;
 		}
 
-		//regenerate();
+		// regenerate();
 	}
-	
+
 	public void regenerate()
 	{
 		// REGENERATION TEST
@@ -416,7 +414,6 @@ public class Asteroidv2 extends Entity
 			}
 		}
 	}
-	
 
 	@Override
 	public void draw(Graphics2D g)
@@ -445,7 +442,7 @@ public class Asteroidv2 extends Entity
 	private static class Pixel
 	{
 		public static final Pixel DEFAULT_PIXEL = new Pixel(Pixel.TYPE_PIXEL);
-		
+
 		private boolean dropItem; // Drop item if destroyed
 
 		public static final int DEFAULT_LIFE = 3;

@@ -48,7 +48,7 @@ public class Game extends JFrame implements ComponentListener
 
 	public static final int FPS_120 = 120;
 
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = !true;
 
 	private boolean run;
 

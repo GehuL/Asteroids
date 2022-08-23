@@ -19,8 +19,6 @@ public abstract class Item extends Entity {
 		show = true;
 		lifeTime = System.currentTimeMillis();
 		this.image = image;
-		
-		this.collisionEnable = false;
 	}
 
 	public void update(float deltaTime) {

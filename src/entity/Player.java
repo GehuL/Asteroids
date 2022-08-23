@@ -84,7 +84,6 @@ public class Player extends Entity
 
 	public boolean onCollision(Entity entity)
 	{
-
 		if (entity instanceof Asteroid)
 		{
 			this.alive = false;

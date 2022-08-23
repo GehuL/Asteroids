@@ -27,7 +27,7 @@ public class Earth extends Entity {
 	}
 
 	public boolean onCollision(Entity entity) {
-		if (entity instanceof Asteroid) {
+		if (entity instanceof Asteroid || entity instanceof Asteroidv2) {
 			dropLife();
 			entity.alive = false;
 			game.spawnEntity(new Explosion(game, entity.x, entity.y, entity.width, entity.width));

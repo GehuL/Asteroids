@@ -23,6 +23,13 @@ Pour le rendu graphique swing et awt sont utilisés.
 Tout est programmé dans la class Asteroidv2 (La v1 est toujours dans le code).
 Chaque entité possède un tableau en 2 dimensions de pixels.
 Un pixel possède comme attributs une couleur et un nombre de vie initiale.
+Ceux-ci ne sont pas des entités et sont régis par l'asteroid. Leurs position à l'image 
+sont affiché en fonction de leur indice.
+
+### Collision sur pixel
+
+Les pixels n'ont pas d'hitbox propre. Il faut d'abord entrer dans l'hitbox de l'entité asteroid qui englobe les pixels.
+Ensuite la méthode dealDamage() permet de déterminer la position de l'impact.
 
 ### Génération d'asteroids
 

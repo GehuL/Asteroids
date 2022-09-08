@@ -1,6 +1,7 @@
 package entity;
 
 import java.awt.Graphics2D;
+
 import asteroids.Game;
 
 public class AsteroidSpawner extends Entity

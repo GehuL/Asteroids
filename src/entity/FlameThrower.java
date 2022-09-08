@@ -13,7 +13,7 @@ public class FlameThrower
 
 	private float angle;
 
-	private int tick;
+	private float tick;
 
 	// Angle en radian
 	public FlameThrower(int spawnTick, float speed, float angle)
@@ -25,12 +25,12 @@ public class FlameThrower
 
 	public void update(Game game, float x, float y)
 	{
-		tick--;
+		tick -= 1 * Entity.GAME_SPEED;
 		if (tick <= 0)
 		{
 			Random rand = Game.getRandom();
 
-			tick += spawnTick;
+			tick = spawnTick;
 
 			float velX = (float) Math.cos(rand.nextFloat() * angle);
 			float velY = (rand.nextFloat(0.5f) + 0.5f) * speed;

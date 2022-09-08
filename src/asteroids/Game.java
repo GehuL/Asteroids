@@ -23,9 +23,10 @@ import javax.imageio.ImageIO;
 import javax.sound.sampled.Clip;
 import javax.swing.JFrame;
 
-import entity.AsteroidSpawner;
-import entity.Earth;
 import entity.Entity;
+import entity.AsteroidSpawner;
+import entity.Asteroidv2;
+import entity.Earth;
 import entity.Player;
 
 public class Game extends JFrame implements ComponentListener
@@ -151,20 +152,18 @@ public class Game extends JFrame implements ComponentListener
 		}
 
 		canvas.setBuffer(buffer);
-
-		initGraphic();
+		canvasGraphic = (Graphics2D) getGraphics();
 
 		gameMusic = Sound.createSound(Sound.path + "game_music.wav");
 		gameMusic.loop(Clip.LOOP_CONTINUOUSLY);
 		gameMusic.start();
 	}
 
-	public void initGraphic()
+	public void applyRendering(Graphics2D g)
 	{
-		canvasGraphic = (Graphics2D) canvas.getGraphics();
-		canvasGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		canvasGraphic.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-		canvasGraphic.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 	}
 
 	public static Random getRandom()
@@ -199,6 +198,9 @@ public class Game extends JFrame implements ComponentListener
 		loadRessources();
 
 		entities.add(new AsteroidSpawner(this));
+		Asteroidv2 a = new Asteroidv2(this, 200, 0, Textures.VAISSEAU.getImage());
+		a.setVelY(0.1f);
+		entities.add(a);
 
 		// GAME LOOP
 		new Thread(() ->
@@ -245,7 +247,7 @@ public class Game extends JFrame implements ComponentListener
 					input.poll();
 					updateAll((float) delta);
 					drawAll();
-					delta--;
+					delta = 0;
 					frames++;
 					if (System.currentTimeMillis() - time >= 1000)
 					{
@@ -328,11 +330,17 @@ public class Game extends JFrame implements ComponentListener
 
 	private void updateAll(float deltaTime)
 	{
-		if (input.keyDown(KeyEvent.VK_UP))
+		if (input.keyDownOnce(KeyEvent.VK_UP))
+		{
 			Entity.GAME_SPEED += 0.1;
+			player.setLayer(player.layer + 1);
+		}
 
-		if (input.keyDown(KeyEvent.VK_DOWN))
+		if (input.keyDownOnce(KeyEvent.VK_DOWN))
+		{
 			Entity.GAME_SPEED -= 0.1;
+			player.setLayer(player.layer - 1);
+		}
 
 		if (input.keyDown(KeyEvent.VK_ESCAPE))
 			System.exit(0);
@@ -393,12 +401,12 @@ public class Game extends JFrame implements ComponentListener
 			}
 		}
 
-		//if (isGameOver())
-			if (input.keyDown(KeyEvent.VK_ENTER))
-			{
-				restart();
+		// if (isGameOver())
+		if (input.keyDownOnce(KeyEvent.VK_ENTER))
+		{
+			restart();
 
-			}
+		}
 	}
 
 	public void restart()
@@ -427,7 +435,7 @@ public class Game extends JFrame implements ComponentListener
 		return !player.alive || earth.isDead();
 	}
 
-	private void drawAll()
+	private synchronized void drawAll()
 	{
 
 		bufferGraphic.setColor(Color.BLACK);
@@ -436,11 +444,17 @@ public class Game extends JFrame implements ComponentListener
 		////////////////////////// ENTITIES ////////////////////////////
 
 		earth.draw(bufferGraphic);
+
+		if (player.layer == 0)
+			player.draw(bufferGraphic);
+
 		for (int i = 0; i < entities.size(); i++)
 		{
 			entities.get(i).draw(bufferGraphic);
 		}
-		player.draw(bufferGraphic);
+
+		if (player.layer > 0)
+			player.draw(bufferGraphic);
 
 		////////////////////////// TEXT ////////////////////////////
 		bufferGraphic.setColor(game_pink);
@@ -500,9 +514,10 @@ public class Game extends JFrame implements ComponentListener
 	}
 
 	@Override
-	public void componentResized(ComponentEvent e)
+	public synchronized void componentResized(ComponentEvent e)
 	{
-		initGraphic();
+		canvasGraphic = (Graphics2D) getGraphics();
+//		applyRendering(canvasGraphic);
 	}
 
 	@Override

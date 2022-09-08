@@ -17,9 +17,9 @@ public enum Textures
 	EXPLOSION("explosion.png"),
 	EARTH("earth.png"),
 	EARTH_LIFE("earthLife.png"),
-	UPGRADE("upgrade.png"),
+	UPGRADE("bonus.png"),
 	BOMBE_ITEM(bombeBullet()),
-	LASER_ITEM(laserItem()),
+	LASER_ITEM("laser_item.png"),
 	BULLET("bullet.png");
 
 	private final String path = "rsc/images/";

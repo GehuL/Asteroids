@@ -11,7 +11,7 @@ public class PixelParticle extends Entity
 
 	private Color color;
 
-	private int tick;
+	private float tick;
 
 	public static final int PIXEL_SIZE = 5;
 
@@ -43,7 +43,7 @@ public class PixelParticle extends Entity
 		if (tick <= 0)
 			this.alive = false;
 
-		tick--;
+		tick -= Entity.GAME_SPEED;
 	}
 
 	public void draw(Graphics2D g)

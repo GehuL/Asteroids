@@ -31,6 +31,7 @@ public abstract class Entity
 		this.y = y;
 		this.width = width;
 		this.height = height;
+		this.game = game;
 
 		hitbox = new Rectangle2D.Float(x, y, width, height);
 
@@ -38,13 +39,12 @@ public abstract class Entity
 
 		collisionEnable = true;
 
-		this.game = game;
 	}
 
 	public void update(float deltaTime)
 	{
-		float offsetX = velX * GAME_SPEED * deltaTime;
-		float offsetY = velY * GAME_SPEED * deltaTime;
+		float offsetX = velX * GAME_SPEED;// * deltaTime;
+		float offsetY = velY * GAME_SPEED;// * deltaTime;
 
 		x += offsetX;
 		y += offsetY;

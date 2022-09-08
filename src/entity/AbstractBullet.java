@@ -2,6 +2,7 @@ package entity;
 
 import java.awt.Graphics2D;
 
+import entity.Entity;
 import asteroids.Game;
 
 public abstract class AbstractBullet extends Entity {

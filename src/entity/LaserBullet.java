@@ -39,6 +39,15 @@ public class LaserBullet extends AbstractBullet {
 			a.destroy();
 
 			Game.score++;
+		}else if(entity instanceof Asteroidv2)
+		{
+			Asteroidv2 a = (Asteroidv2) entity;
+			if (a.checkPixelCollision(getHitbox()))
+			{
+				a.dealDamage(this, (float) getHitbox().getCenterX(), (float) getHitbox().getCenterY(), getWidth() * 1.7f);
+				game.spawnEntity(new Explosion(game, this.x - 5, this.y - 5, width + 10, width + 10));
+				this.alive = false;
+			}
 		}
 		return true;
 	}

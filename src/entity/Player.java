@@ -13,6 +13,8 @@ public class Player extends Entity
 {
 	// private static final int MAX_SPEED = 5;
 
+	public int layer = 1;
+
 	private float lastX;
 
 	private float lastY;
@@ -40,6 +42,31 @@ public class Player extends Entity
 
 		reset();
 
+	}
+
+	public void setLayer(int layer)
+	{
+		layer = layer < 0 ? 0 : layer > 2 ? 2 : layer;
+		this.layer = layer;
+		int newSize;
+		switch (this.layer)
+		{
+		case 0:
+			newSize = 50;
+			break;
+		case 1:
+			newSize = 60;
+			break;
+		case 2:
+			newSize = 70;
+			break;
+		default:
+			this.layer = layer;
+			newSize = 50;
+		}
+		x -= (newSize - width) / 2;
+		y -= (newSize - height) / 2;
+		height = width = newSize;
 	}
 
 	public void update(float deltaTime)
@@ -107,14 +134,14 @@ public class Player extends Entity
 			Rectangle2D.Float collisionRect = asteroid.getPixelCollisionRect(hitbox);
 			if (collisionRect != null)
 			{
-				if (collisionRect.x < this.y || collisionRect.getCenterY() > this.y + width)
-					this.velY = -1;
+//				if (collisionRect.x < this.y || collisionRect.getCenterY() > this.y + width)
+//					this.velY = -1;
+//
+//				final float bouncing = 1.f;
+//
+//				this.velX = asteroid.velX - velX * bouncing;
+//				this.velY = asteroid.velY - velY * bouncing;
 
-				final float bouncing = 1.f;
-
-				this.velX = asteroid.velX - velX * bouncing;
-				this.velY = asteroid.velY - velY * bouncing;
-				
 //				int playerMasse = 5;
 //				int asteroidMasse = 30;
 //				
@@ -131,7 +158,7 @@ public class Player extends Entity
 	public void reset()
 	{
 		alive = true;
-		cannon.reload(new BasicBulletItem(game));
+		cannon.reload(new LaserItem(game, 0, 0, 0, 0));
 		velX = 0;
 		velY = 0;
 		x = game.width() / 2 - width / 2;

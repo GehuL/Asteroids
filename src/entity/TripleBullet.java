@@ -14,6 +14,7 @@ public class TripleBullet extends Bullet
 		game.spawnEntity(new Bullet(game, x, y, 7, 15, 0.5f, game.getPlayer().getVelY()));
 		game.spawnEntity(new Bullet(game, x, y, 7, 15, 2, game.getPlayer().getVelY()));
 
+		collisionEnable = false;
 		alive = false;
 	}
 

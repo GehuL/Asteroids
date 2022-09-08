@@ -1,30 +1,20 @@
 package entity;
-import java.awt.Graphics2D;
-
 import asteroids.Game;
 import asteroids.Sound;
 import asteroids.Textures;
 
 public class LaserItem extends BulletItem {
 
-	public LaserItem(Game game, float x, float y) {
-		super(game, x, y, 30, 30, Textures.LASER_ITEM.getImage());
+	public LaserItem(Game game, float x, float y, int w, int h) {
+		super(game, x, y, w, h, Textures.LASER_ITEM.getImage());
 		ammount = 15;
-		fireDelay = 1500;
+		fireDelay = 120;
 	}
 
 	@Override
 	protected void shoot(Game game, float x, float y) {
 		game.spawnEntity(new LaserBullet(game));
 		Sound.LASER.play();
-	}
-
-	public void update(float deltaTime) {
-		super.update(deltaTime);
-	}
-
-	public void draw(Graphics2D g) {
-		game.drawImage(Textures.LASER_ITEM.getImage(), x, y, width, height);
 	}
 
 	@Override

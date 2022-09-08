@@ -16,7 +16,7 @@ public class BasicBulletItem extends BulletItem {
 	public void shoot(Game game, float x, float y) {
 		Bullet bullet = new Bullet(game, x - default_width / 2, y - default_height / 2, default_width, default_height,  game.getPlayer().getVelX(), game.getPlayer().getVelY());
 		game.spawnEntity(bullet);
-		Sound.GUNSHOT.play();
+		Sound.GUNSHOT.play(); 
 	}
 
 	@Override

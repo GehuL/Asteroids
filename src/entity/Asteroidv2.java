@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Float;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -22,6 +23,7 @@ public class Asteroidv2 extends Entity
 
 	public static float speed = 0.1f;
 
+	// Used with asteroid generator
 	public Asteroidv2(Game game, float x, float y)
 	{
 		super(game, x, y, 0, 0);
@@ -40,6 +42,7 @@ public class Asteroidv2 extends Entity
 		System.out.println(info);
 	}
 
+	// Used when asteroid is split
 	private Asteroidv2(Game game, float x, float y, Pixel[][] pixels)
 	{
 		super(game, x, y, 0, 0);
@@ -50,6 +53,34 @@ public class Asteroidv2 extends Entity
 		height = pixels.length * PIXEL_SIZE;
 
 		System.out.println("Asteroid crée par transfert (" + pixels.length * pixels[0].length + " pixels).");
+	}
+
+	// TEST (for structure génération ?)
+	public Asteroidv2(Game game, float x, float y, BufferedImage image)
+	{
+		super(game, x, y, 0, 0);
+		pixels = fromImage(image);
+
+		width = pixels[0].length * PIXEL_SIZE;
+		height = pixels.length * PIXEL_SIZE;
+
+		System.out.println("Asteroid crée par image (" + pixels.length * pixels[0].length + " pixels).");
+	}
+
+	public static Pixel[][] fromImage(BufferedImage image)
+	{
+		Pixel[][] pxArray = new Pixel[image.getHeight()][image.getWidth()];
+		for (int line = 0; line < pxArray.length; line++)
+			for (int col = 0; col < pxArray[line].length; col++)
+			{
+				int argb = image.getRGB(col, line);
+				if (((argb >> 24) & 0xff) > 254)
+				{
+					Pixel px = new Pixel(new Color(argb, true), 3, false);
+					pxArray[line][col] = px;
+				}
+			}
+		return shrinkAsteroid(pxArray, null);
 	}
 
 	// There is no longer pixel alive
@@ -351,22 +382,32 @@ public class Asteroidv2 extends Entity
 						Rectangle2D.Float rect = (Float) hitbox.clone();
 						sub = shrinkAsteroid(sub, rect);
 
-						Asteroidv2 a = new Asteroidv2(game, rect.x, rect.y, sub);
+						if (sub.length == 1 && sub[0].length == 1) // This is a single pixel
+						{
+							PixelParticle particle = new PixelParticle(game, sub[0][0].getInitColor(), (int) rect.getCenterX(), (int) rect.getCenterY(), -bullet.getVelX(), getVelY() - bullet.getVelY() * 0.7f, 30);
 
-						// a.velX = (float) Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) *
-						// bullet.velX;
-						
-						float direction = 0;
-						if(rect.getX() > bullet.hitbox.getCenterX())
-							direction = 0.5f;
-						else
-							direction = -0.5f;
-						
-						a.velX = (float) (Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) * direction);
+							particle.velX = (float) Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) * bullet.velX;
+							particle.velX += Math.cos(Game.getRandom().nextFloat() * Math.PI);
 
-						a.velY = this.velY;
+							game.spawnEntity(particle);
+						} else
+						{
+							Asteroidv2 a = new Asteroidv2(game, rect.x, rect.y, sub);
 
-						game.spawnEntity(a);
+							float direction = 0;
+							if (rect.getX() > bullet.hitbox.getCenterX())
+								direction = 0.5f;
+							else
+								direction = -0.5f;
+
+							// a.velX = (float) (Math.cos(Game.getRandom().nextFloat() * Math.PI / 2) *
+							// direction);
+							a.velX = this.velY * direction;
+							a.velY = this.velY;
+
+							game.spawnEntity(a);
+						}
+
 					}
 					this.alive = false;
 				}
@@ -416,6 +457,28 @@ public class Asteroidv2 extends Entity
 		}
 	}
 
+	private boolean checkPixelCollision(int x, int y, Entity e, float radius)
+	{
+		if (pixels[y][x] != null && pixels[y][x].life > 0)
+		{
+			Rectangle2D.Float pxRect = new Rectangle2D.Float();
+
+			pxRect.x = (int) this.x + PIXEL_SIZE * x;
+			pxRect.y = (int) this.y + PIXEL_SIZE * y;
+			pxRect.width = PIXEL_SIZE;
+			pxRect.height = PIXEL_SIZE;
+
+			Rectangle2D.Float rect = e.getHitbox();
+
+			float dist = (float) Math.sqrt(Math.pow(rect.getCenterX() - pxRect.getCenterX(), 2) + Math.pow(rect.getCenterY() - pxRect.getCenterY(), 2));
+			if (dist < radius)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public void draw(Graphics2D g)
 	{
@@ -425,7 +488,24 @@ public class Asteroidv2 extends Entity
 				if (pixels[y][x] != null && pixels[y][x].life > 0)
 				{
 					Pixel pixel = pixels[y][x];;
-					g.setColor(pixel.getColor());
+					Color pxCol = pixel.getColor();
+					if (checkPixelCollision(x, y, game.getPlayer(), game.getPlayer().width * 0.75f))
+					{
+						if(game.getPlayer().layer == 0)
+						{
+							// Transparency effect
+							int col = pixel.getColor().getRGB() & 0xffffff;
+							col |= 0x45 << 24;
+							pxCol = new Color(col, true);
+							
+						}else if(game.getPlayer().layer == 2)
+						{
+							// Shadow effect
+							pxCol = new Color(pxCol.getRed() / 2, pxCol.getGreen() / 2, pxCol.getBlue() / 2);
+						}
+					}
+					
+					g.setColor(pxCol);
 					g.fillRect((int) this.x + PIXEL_SIZE * x, (int) this.y + PIXEL_SIZE * y, PIXEL_SIZE, PIXEL_SIZE);
 				}
 			}
@@ -447,8 +527,6 @@ public class Asteroidv2 extends Entity
 		private boolean dropItem; // Drop item if destroyed
 
 		public static final int DEFAULT_LIFE = 3;
-
-		public static final int TYPE_EDGE = 0;
 
 		public static final int TYPE_PIXEL = 1;
 
@@ -526,5 +604,19 @@ public class Asteroidv2 extends Entity
 			return type;
 		}
 	}
+
+//	private class FindSubAsteroidResult
+//	{
+//		private final int nbrPx;
+//		private final ArrayList<Pixel[][]> subAsteroid;
+//
+//		public FindSubAsteroidResult(int nbrPx, ArrayList<Pixel[][]> subAsteroid)
+//		{
+//			this.nbrPx = nbrPx;
+//			this.subAsteroid = subAsteroid;
+//		}
+//		
+//		public int getNn
+//	}
 
 }

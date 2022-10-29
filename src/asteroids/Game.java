@@ -198,9 +198,6 @@ public class Game extends JFrame implements ComponentListener
 		loadRessources();
 
 		entities.add(new AsteroidSpawner(this));
-		Asteroidv2 a = new Asteroidv2(this, 200, 0, Textures.VAISSEAU.getImage());
-		a.setVelY(0.1f);
-		entities.add(a);
 
 		// GAME LOOP
 		new Thread(() ->

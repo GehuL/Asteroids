@@ -158,7 +158,7 @@ public class Player extends Entity
 	public void reset()
 	{
 		alive = true;
-		cannon.reload(new LaserItem(game, 0, 0, 0, 0));
+		cannon.reload(new BasicBulletItem(game));
 		velX = 0;
 		velY = 0;
 		x = game.width() / 2 - width / 2;
